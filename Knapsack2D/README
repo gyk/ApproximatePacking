@@ -1,0 +1,175 @@
+2D背包问题的$(3+\epsilon)$-近似算法
+========
+
+
+问题描述
+--------
+
+**Maximum profit two-dimensional knapsack packing problem**
+
+_Given a set of $n$ rectangles $j = 1, \ldots , n$, each having a width $a_j$ , height $b_j$ and profit $p_j$ and a rectangular plate having width $a$ and height $b$. The maximum profit two-dimensional knapsack packing (2DKP) problem assigns a subset of the rectangles onto the plate such that the associated profit sum is maximized, please design an approximation algorithm or meta heuristic algorithm for it._
+
+分析
+--------
+
+2D背包问题是strongly NP-hard问题，不太可能存在多项式时间确定性算法，也不太可能存在FPTAS算法。
+近年来有不少研究者采用启发式算法求解这个问题`[3][4]`。
+本实验按照题目要求，根据论文`[2]`实现了一个$(3+\epsilon)$-近似算法。
+
+设第$i$个物品的宽度为$a_i$，高度为$b_i$，面积$s_i=a_i b_i$，价值为$p_i$，箱子的尺寸为$(a, b)$，
+则根据`[1]`有如下定理：
+
+- - - -
+
+**Steinberg's Theorem**：令 $x_+$ 表示 $\max \{x, 0\}$，
+令$a_L$为$\max\ a_i$，$b_L$为$\max\ b_i$，$S_L = \sum_i a_i b_i$. 如果满足不等式
+
+$$ a_L \leq a,\quad b_L \leq b, \quad 2S_L \leq (2a_L-a)_+(2b_L-b)_+ $$
+
+则存在算法可以把物品装入箱子，该算法的时间复杂度为$O(n\text{log}^2 n / \text{log}\text{log} n)$.
+
+- - - -
+
+Steinberg算法把输入分成7种情况，一步步规约到小规模的子问题，直到成功求解。
+
+$(3+\epsilon)$-近似算法
+--------
+
+我们先找到物品的一个子集，使其价值的总和接近最优值的上界。然后试着把这个子集中的物品尽可能多的装进箱子。
+因此，首先必须求解1D背包问题：
+
+**1D背包问题**：给定容量为$C=a \cdot b$的背包，以及大小为$c_i = a_i \cdot b_i$，价值为$p_i$的物品，
+找到物品的子集，使得在总大小不超过$C$的情况下最大化物品的总价值。
+
+1D背包问题存在FPTAS解法。我们先求解1D背包问题，
+使得$(1+\epsilon)\sum_i p_i \geq OPT_{\text{1D}}$，
+然后根据Steinberg算法，把选出的物品装入尺寸$(a, 2b)$的矩形中。
+把该矩形分成两个尺寸$(a, b)$的矩形。
+能够完全容纳在左边或右边矩形的物品形成了2D背包问题的两个解。
+显然剩下的物品也可以完全装进箱子，所以是第三个解。
+算法最后返回这三个解中最大的作为2D背包问题的近似解。
+可以证明这种算法的近似比是$3+\epsilon$。
+
+代码说明
+--------
+
+本实验代码使用Matlab完成，在Matlab 2010b上测试通过。
+
+**运行方法**：
+
+在Matlab中定位到源代码文件所在目录，运行命令：
+
+	% 需要测试的数据文件
+	fileName = 'CHL2.txt';
+	epsilon = 0.5;
+	knapsack2D(['.\benchmarksOPP\' fileName], epsilon);
+
+程序会打印出中间步骤：
+
+	Packing using Steinberg's algorithm:
+	Pack item #9 of size (31, 12) at (0.000, 0.000)
+	Pack item #10 of size (31, 12) at (0.000, 12.000)
+	Pack item #4 of size (15, 29) at (0.000, 24.000)
+	Pack item #5 of size (15, 29) at (15.000, 24.000)
+	Pack item #6 of size (15, 29) at (30.000, 24.000)
+	Pack item #2 of size (13, 17) at (45.000, 24.000)
+	Pack item #7 of size (29, 13) at (0.000, 73.226)
+	Pack item #8 of size (29, 13) at (29.000, 73.226)
+	Pack item #3 of size (13, 17) at (0.000, 86.226)
+	Pack item #1 of size (11, 15) at (13.000, 86.226)
+	Intermediate result has been drawn. 
+	Press any key to continue...
+
+![](interm.png)
+以及最终结果：
+
+	The result of (3 + epsilon) approximation algorithm (epsilon = 0.000000):
+	Item 1 (size = (13, 17), profit = 159.000) packed at (45.000, 24.000)
+	Item 2 (size = (15, 29), profit = 348.000) packed at (0.000, 24.000)
+	Item 3 (size = (15, 29), profit = 348.000) packed at (15.000, 24.000)
+	Item 4 (size = (15, 29), profit = 348.000) packed at (30.000, 24.000)
+	Item 5 (size = (31, 12), profit = 260.000) packed at (0.000, 0.000)
+	Item 6 (size = (31, 12), profit = 260.000) packed at (0.000, 12.000)
+	The total profit is 1723.000
+
+![](final.png)
+
+实验结果
+--------
+
+测试数据从
+<https://wiki.bordeaux.inria.fr/realopt/pmwiki.php/Project/SoftwareAlgoKP>
+下载，
+该网站上的程序基于Consecutive Ones Matrices和MPQ-trees实现了2D背包问题的确定性算法，
+可以作为近似算法的参照。
+本实验代码的运行结果与最优解的比较如下（$\epsilon$ = 0.5）：
+
+Test case       A(I)         OPT(I)       Ratio
+----------      --------     ---------    -------
+ngcut1.txt      164.0        121.0        1.3554
+ngcut2.txt      230.0        190.0        1.2105
+ngcut3.txt      247.0        162.0        1.5247
+ngcut4.txt      268.0        204.0        1.3137
+ngcut5.txt      358.0        358.0        1.0000
+ngcut6.txt      289.0        188.0        1.5372
+ngcut7.txt      430.0        370.0        1.1622
+ngcut8.txt      834.0        514.0        1.6226
+ngcut9.txt      924.0        651.0        1.4194
+ngcut10.txt     1452.0       1452.0       1.0000
+ngcut11.txt     1688.0       823.0        2.0510
+ngcut12.txt     1865.0       1041.0       1.7915
+hccut2.txt      1178.0       662.0        1.7795
+hccut3.txt      1270.0       828.0        1.5338
+hccut4.txt      2517.0       1604.0       1.5692
+hccut5.txt      2949.0       2028.0       1.4541
+CHL2.txt        2326.0       1723.0       1.3500
+CHL2s.txt       3336.0       1333.0       2.5026
+A1.txt          2020.0       1080.0       1.8704
+A1s.txt         2956.0       1333.0       2.2176
+A2.txt          2615.0       1160.0       2.2543
+A2s.txt         3535.0       1948.0       1.8147
+cgcut1.txt      244.0        156.0        1.5641
+cgcut2.txt      2892.0       1831.0       1.5795
+cgcut3.txt      1860.0       980.0        1.8980
+gcut1.txt       48368.0      30728.0      1.5741
+gcut2.txt       59798.0      25510.0      2.3441
+gcut3.txt       61275.0      24776.0      2.4732
+gcut4.txt       61380.0      31325.0      1.9595
+gcut5.txt       195582.0     100392.0     1.9482
+gcut6.txt       236305.0     95465.0      2.4753
+gcut7.txt       240143.0     136510.0     1.7592
+gcut8.txt       245758.0     100256.0     2.4513
+gcut9.txt       939600.0     609674.0     1.5412
+gcut10.txt      937349.0     404390.0     2.3179
+gcut11.txt      969709.0     426557.0     2.2733
+gcut12.txt      979521.0     571800.0     1.7130
+okp1.txt        27718.0      14204.0      1.9514
+okp3.txt        24019.0      18841.0      1.2748
+okp4.txt        32893.0      16609.0      1.9804
+okp2.txt        22502.0      11168.0      2.0149
+okp5.txt        27923.0      12153.0      2.2976
+
+由上表可以看出，所有测试的近似比都小于3.5，符合理论近似比。
+
+总结
+--------
+
+1. 实验中1D背包的FPTAS算法时间复杂度是$O(n^2 \lfloor\frac{n}{\epsilon}\rfloor)$，
+当测试数据集的profit值很大的时候（例如gcut*的后面几项测试）运行时间太长。
+这可以通过选择其它更好的FPTAS算法来改进，比如`[5]`的算法可以达到
+$O(n \text{log} n + \text{min} \{n,1 / \epsilon\ \text{log} (1 / \epsilon)\}1 / \epsilon^2))$
+的时间复杂度和$O(n + 1 / \epsilon^2)$的空间复杂度；
+2. 从本实验的输出结果来看，背包中往往还有较大的空余，
+在解决实际问题的时候我们可以结合其它算法进一步得到更优化的结果；
+3. 根据`[2]`，基于Steinberg's Theorem还可以得到$(2+\epsilon)$-近似算法，
+但是步骤比较复杂，这里就不再实现了。
+
+References
+--------
+
+`[1]` Steinberg, A. (1997). A strip-packing algorithm with absolute performance bound 2. SIAM Journal on Computing, 26(2), 401-409.  
+`[2]` Jansen, K., & Zhang, G. (2007). Maximizing the total profit of rectangles packed into a rectangle. Algorithmica, 47(3), 323-342.  
+`[3]` Egeblad, J., & Pisinger, D. (2009). Heuristic approaches for the two-and three-dimensional knapsack packing problem. 
+Computers & Operations Research, 36(4), 1026-1049.  
+`[4]` Leung, S. C., Zhang, D., Zhou, C., & Wu, T. (2012). A hybrid simulated annealing metaheuristic algorithm for the two-dimensional knapsack packing problem. Computers & Operations Research, 39(1), 64-73.  
+`[5]` Kellerer, H., & Pferschy, U. (1999). A new fully polynomial time approximation scheme for the knapsack problem. Journal of Combinatorial Optimization, 3(1), 59-71.

@@ -1,0 +1,111 @@
+Strip Packing问题的2-近似算法
+========
+
+
+问题描述
+--------
+
+**Strip packing problem**
+
+_In wood or glass industries, rectangular components have to be cut from large sheets of material. Given a set of rectangular objects $(a_i,b_i), 0 \leq i \leq n$ and a large rectangular sheet with width $a$ and unlimited height, the objective is to minimize the height $b$ of sheet. Every packing rectangle has a fixed direction._
+
+分析
+--------
+
+Strip Packing是NP-hard问题。本实验根据`[1]`实现了一个2-近似算法。
+
+设第$i$个物品的宽度为$a_i$，高度为$b_i$，面积$s_i=a_i b_i$，价值为$p_i$，箱子的尺寸为$(a, b)$，
+则根据`[1]`有如下定理：
+
+- - - -
+
+**Steinberg's Theorem**：令 $x_+$ 表示 $\text{max} \{x, 0\}$，
+令$a_L$为$\text{max}\ a_i$，$b_L$为$\text{max}\ b_i$，$S_L = \sum_i a_i b_i$. 如果满足不等式
+
+$$ a_L \leq a,\quad b_L \leq b, \quad 2S_L \leq ab - (2a_L-a)_+(2b_L-b)_+ $$
+
+则存在算法可以把物品装入箱子，该算法的时间复杂度为$O(n\text{log}^2 n / \text{log}\text{log} n)$.
+
+- - - -
+
+Steinberg算法把输入分成$C_\mu, -3 \leq \mu \leq 3$ 7种情况，
+分别对应$P_\mu, -3 \leq \mu \leq 3$ 7个子过程，
+一步步规约到小规模的子问题，直到成功求解。
+
+`[1]`中对于最小高度的计算是针对strip宽度为1的情况。本实验中strip宽度任意，求出最小高度如下：
+
+$$h = \text{inf}\{b:b_L \leq b\quad\text{and}\quad 2S_L \leq b - (2a_L-a)_+(2b_L-b)_+\}$$
+
+得到
+
+$$h = \text{max}\left\{b_L, 2\frac{S_L}{a} + (2-\frac{a}{a_L})_+(b_L-\frac{S_L}{a})_+\right\}$$
+
+可以证明，$A(I) \leq 2 \cdot \text{OPT}(I)$，详见`[1]`。
+
+代码说明
+--------
+
+本实验代码使用Matlab完成，在Matlab 2010b上测试通过。
+
+**运行方法**：
+
+在Matlab中定位到源代码文件所在目录，运行命令：
+
+	% 需要测试的数据文件
+	fileName = 'beng02.txt';
+	stripPacking(['.\benchmarksSPP\' fileName]);
+
+程序输出：
+
+	The result of 2-approximation algorithm:
+	Packing using Steinberg's algorithm:
+	Pack item #7 of size (8, 12) at (0.000, 0.000)
+	Pack item #16 of size (8, 9) at (8.000, 0.000)
+	Pack item #20 of size (8, 7) at (16.000, 0.000)
+	Pack item #36 of size (8, 8) at (8.000, 9.000)
+	Pack item #4 of size (7, 4) at (0.000, 18.605)
+	...
+	Pack item #30 of size (1, 1) at (107.840, 17.000)
+	Intermediate result has been drawn. 
+	Press any key to continue...
+
+![](result.png)
+
+	The total height is 113.600
+	The lower bound of height is 57.000
+	A(I) / OPT(I) = 1.993
+	================================
+
+实验结果
+--------
+
+测试数据从
+<http://www.computational-logistics.org/orlib/topic/2D%20Strip%20Packing/Data/beng.zip>
+下载，数据中包含了高度的lower bound，也就是最优解。实验中的算法和最优解比较如下：
+
+Test case      A(I)        OPT(I)      Ratio
+----------     --------    ---------   -------
+beng01.txt     59.280      30.000      1.976
+beng02.txt     113.600     57.000      1.993
+beng03.txt     167.200     84.000      1.990
+beng04.txt     213.840     107.000     1.999
+beng05.txt     266.400     134.000     1.988
+beng06.txt     71.000      36.000      1.972
+beng07.txt     133.650     67.000      1.995
+beng08.txt     201.350     101.000     1.994
+beng09.txt     250.400     126.000     1.987
+beng10.txt     310.850     156.000     1.993
+
+由上表可以看出，所有测试的近似比都小于2，符合理论近似比限值。
+
+总结
+--------
+
+从本实验的输出结果来看，strip排列得并不是十分紧密，
+在解决实际问题的时候我们可以结合其它算法进一步得到更优化的结果，
+因时间有限，这里就不再实现了。
+
+References
+--------
+
+`[1]` Steinberg, A. (1997). A strip-packing algorithm with absolute performance bound 2. SIAM Journal on Computing, 26(2), 401-409.
